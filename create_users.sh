@@ -4,39 +4,44 @@
 # sets proper permissions and creates a welcome file
 
 # Check if script is run as root
+#!/bin/bash
+# Script to create users and set up their environment
+
 if [ "$EUID" -ne 0 ]; then
-echo "You must run this script as root"
-exit 1
+    echo "You must run this script as root"
+    exit 1
 fi
 
-# Loop through all users passed as arguments
-for user in "$@"
-do
-   echo "Create user: $user"
+for user in "$@"; do
+    echo "Create user: $user"
 
-# Create the user with a home directory
-useradd -m -s /bin/bash "$user"
+    # Skip if user already exists
+    if id "$user" &>/dev/null; then
+        echo "User $user already exists, skipping..."
+        continue
+    fi
 
-# Create standard folders in the users home directory
-mkdir -p /home/$user/Documents
-mkdir -p /home/$user/Downloads
-mkdir -p /home/$user/Work
+    # Create user with home directory
+    useradd -m -s /bin/bash "$user"
 
-# Set ownership so the user owns their home directory and folders
-chown -R $user:$user  /home/$user
+    USER_HOME="/home/$user"
 
-# Set permissions so only the user can access their home directory
-chmod 700 /home/$user/Documents
-chmod 700 /home/$user/Downloads
-chmod 700 /home/$user/Work
+    # Create standard folders
+    mkdir -p "$USER_HOME/Documents" "$USER_HOME/Downloads" "$USER_HOME/Work"
 
-# Create a welcome file in the users home directory
-echo "Välkommen $user" > /home/$user/welcome.txt
+    # Set ownership
+    chown -R "$user:$user" "$USER_HOME"
 
-# Append a list of all existing users on the system
-cut -d: -f1 /etc/passwd | grep -v "^$user$" >> /home/$user/welcome.txt
+    # Set permissions
+    chmod 700 "$USER_HOME" "$USER_HOME/Documents" "$USER_HOME/Downloads" "$USER_HOME/Work"
+
+    # Create welcome file
+    echo "Välkommen $user" > "$USER_HOME/welcome.txt"
+    cut -d: -f1 /etc/passwd | grep -v -F "^$user$" >> "$USER_HOME/welcome.txt"
+
+    # Optional: set default password
+    # echo "$user:changeme" | chpasswd
 
 done
-
 
    
