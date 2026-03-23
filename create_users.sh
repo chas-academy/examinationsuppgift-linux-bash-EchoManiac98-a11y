@@ -15,7 +15,7 @@ do
    echo "Create user: $user"
 
 # Create the user with a home directory
-useradd -m "$user"
+useradd -m -s /bin/bash "$user"
 
 # Create standard folders in the users home directory
 mkdir -p /home/$user/Documents
@@ -26,7 +26,9 @@ mkdir -p /home/$user/Work
 chown -R $user:$user  /home/$user
 
 # Set permissions so only the user can access their home directory
-chmod -R 700 /home/$user
+chmod 700 /home/$user/Documents
+chmod 700 /home/$user/Downloads
+chmod 700 /home/$user/Work
 
 # Create a welcome file in the users home directory
 echo "Välkommen $user" > /home/$user/welcome.txt
