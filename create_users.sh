@@ -1,40 +1,44 @@
 #!/bin/bash
 # Script to create users and set up their environment
-# Följer provets krav: skapar användare, hemkatalog, mappar och welcome.txt
+# This script creates users, sets up Documents, Downloads, Work folders,
+# sets proper permissions, and creates a welcome file
 
-# Kontrollera att scriptet körs som root
+# Check if script is run as root
 if [ "$EUID" -ne 0 ]; then
-    echo "Du måste köra scriptet som root"
+    echo "You must run this script as root"
     exit 1
 fi
 
-# Loopa genom alla användarnamn som skickas som argument
+# Loop through all users passed as arguments
 for user in "$@"; do
-    echo "Skapar användare: $user"
+    echo "Create user: $user"
 
-    # Hoppa över om användaren redan finns
+    # Skip if user already exists
     if id "$user" &>/dev/null; then
-        echo "Användaren $user finns redan, hoppar över..."
+        echo "User $user already exists, skipping..."
         continue
     fi
 
-    # Skapa användaren med hemkatalog och bash som shell
-    useradd -m -s /bin/bash "$user"
+    # Create the user with a home directory
+    useradd -m "$user"
 
     USER_HOME="/home/$user"
 
-    # Skapa standardmappar
+    # Create standard folders in the user's home directory
     mkdir -p "$USER_HOME/Documents" "$USER_HOME/Downloads" "$USER_HOME/Work"
 
-    # Sätt ägarskap
+    # Set ownership so the user owns their home directory and folders
     chown -R "$user:$user" "$USER_HOME"
 
-    # Sätt rättigheter så bara användaren kan läsa/skriva
+    # Set permissions so only the user can access their home directory and folders
     chmod 700 "$USER_HOME" "$USER_HOME/Documents" "$USER_HOME/Downloads" "$USER_HOME/Work"
 
-    # Skapa welcome.txt med personligt meddelande och lista på andra användare
-    echo "Välkommen $user" > "$USER_HOME/welcome.txt"
+    # Create a welcome file in the user's home directory
+    echo "Welcome $user" > "$USER_HOME/welcome.txt"
+
+    # Append a list of all existing users on the system (excluding this new user)
     cut -d: -f1 /etc/passwd | grep -v -F "^$user$" >> "$USER_HOME/welcome.txt"
+
+    # Ensure the user owns the welcome file
     chown "$user:$user" "$USER_HOME/welcome.txt"
 done
-   
