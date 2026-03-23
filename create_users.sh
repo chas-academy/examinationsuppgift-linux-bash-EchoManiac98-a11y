@@ -1,47 +1,40 @@
-#!/bin/bash 
-# Script to create users and set up their environment 
-# This script creates users, sets up Documents, Downloads, Work folders
-# sets proper permissions and creates a welcome file
-
-# Check if script is run as root
 #!/bin/bash
 # Script to create users and set up their environment
+# Följer provets krav: skapar användare, hemkatalog, mappar och welcome.txt
 
+# Kontrollera att scriptet körs som root
 if [ "$EUID" -ne 0 ]; then
-    echo "You must run this script as root"
+    echo "Du måste köra scriptet som root"
     exit 1
 fi
 
+# Loopa genom alla användarnamn som skickas som argument
 for user in "$@"; do
-    echo "Create user: $user"
+    echo "Skapar användare: $user"
 
-    # Skip if user already exists
+    # Hoppa över om användaren redan finns
     if id "$user" &>/dev/null; then
-        echo "User $user already exists, skipping..."
+        echo "Användaren $user finns redan, hoppar över..."
         continue
     fi
 
-    # Create user with home directory
+    # Skapa användaren med hemkatalog och bash som shell
     useradd -m -s /bin/bash "$user"
 
     USER_HOME="/home/$user"
 
-    # Create standard folders
+    # Skapa standardmappar
     mkdir -p "$USER_HOME/Documents" "$USER_HOME/Downloads" "$USER_HOME/Work"
 
-    # Set ownership
+    # Sätt ägarskap
     chown -R "$user:$user" "$USER_HOME"
 
-    # Set permissions
+    # Sätt rättigheter så bara användaren kan läsa/skriva
     chmod 700 "$USER_HOME" "$USER_HOME/Documents" "$USER_HOME/Downloads" "$USER_HOME/Work"
 
-    # Create welcome file
+    # Skapa welcome.txt med personligt meddelande och lista på andra användare
     echo "Välkommen $user" > "$USER_HOME/welcome.txt"
     cut -d: -f1 /etc/passwd | grep -v -F "^$user$" >> "$USER_HOME/welcome.txt"
-
-    # Optional: set default password
-    # echo "$user:changeme" | chpasswd
-
+    chown "$user:$user" "$USER_HOME/welcome.txt"
 done
-
    
