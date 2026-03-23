@@ -29,10 +29,10 @@ chown -R $user:$user  /home/$user
 chmod -R 700 /home/$user
 
 # Create a welcome file in the users home directory
-echo "Welcome $user" > /home/$user/welcome.txt
+echo "Välkommen $user" > /home/$user/welcome.txt
 
 # Append a list of all existing users on the system
-cut -d: -f1 /etc/passwd >> /home/$user/welcome.txt
+cut -d: -f1 /etc/passwd | grep -v "^$user$" >> /home/$user/welcome.txt
 
 done
 
